@@ -5,8 +5,11 @@ import itertools
 import logging
 
 import telegram
+from gtts import gTTS
 from telegram import Message, MessageEntity, Update, ChatMember, constants
 from telegram.ext import CallbackContext, ContextTypes
+
+from io import BytesIO
 
 from usage_tracker import UsageTracker
 
@@ -98,6 +101,17 @@ async def wrap_with_indicator(update: Update, context: CallbackContext, coroutin
         except asyncio.TimeoutError:
             pass
 
+
+async def send_voice(context: ContextTypes.DEFAULT_TYPE, chat_id: int | None, text: str):
+    mp3_fp = BytesIO()
+    tts = gTTS(text=text, lang='ru', slow=False)
+    file_name = f"{chat_id}.mp3"
+    tts.save(file_name)
+    tts.write_to_fp(mp3_fp)
+    # save
+    # await context.bot.send_voice(chat_id=chat_id, voice=mp3_fp)
+    with open(file_name, "rb") as speech:
+        await context.bot.send_voice(chat_id, speech)
 
 async def edit_message_with_retry(context: ContextTypes.DEFAULT_TYPE, chat_id: int | None,
                                   message_id: str, text: str, markdown: bool = True, is_inline: bool = False):
